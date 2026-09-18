@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+	{% for block in sections %}
+		{% if block.type == 'hero' %}
+		<section class="shell hero">
+			<div class="hero-copy">
+				<div class="kicker">{{ block.eyebrow or 'VELANG' }}</div>
+				<h1 class="display">{{ block.title }}</h1>
+				<p class="subtitle">{{ block.text }}</p>
+				{% if block.href %}<div class="hero-actions"><a class="button" href="{{ block.href }}">Explore</a></div>{% endif %}
+			</div>
+			<div class="hero-media">{% if block.image %}<img src="{{ block.image }}" alt="{{ block.title }}">{% endif %}</div>
+		</section>
+		{% elif block.type == 'editorial' %}
+		<section class="shell editorial">
+			<div class="editorial-media">{% if block.image %}<img src="{{ block.image }}" alt="{{ block.title }}" loading="lazy">{% endif %}</div>
+			<div class="editorial-copy"><div class="kicker">{{ block.eyebrow }}</div><h2 class="title">{{ block.title }}</h2><p class="subtitle">{{ block.text }}</p>{% if block.href %}<div class="hero-actions"><a class="button secondary" href="{{ block.href }}">Read more</a></div>{% endif %}</div>
+		</section>
+		{% elif block.type in ['featured_products','latest_products'] %}
+		<section class="shell page" style="padding-bottom:24px"><div class="section-head"><div><div class="kicker">{{ block.kicker or 'Collection' }}</div><h2>{{ block.title }}</h2></div><a class="button secondary small" href="/shop">View all</a></div><div class="product-grid">{% for product in block.products %}{% include 'components/product-card.html' %}{% endfor %}</div></section>
+		{% elif block.type == 'category_strip' %}
+		<section class="shell page" style="padding-top:20px"><div class="section-head"><div><div class="kicker">Collections</div><h2>{{ block.title }}</h2></div><a class="button secondary small" href="/collections">All collections</a></div><div class="collection-list">{% for entry in block.categories %}{% set category = entry.category %}<a class="collection card" href="/category/{{ category.slug }}"><div class="collection-copy"><div class="kicker">{{ '%02d'|format(loop.index) }}</div><h3 class="title" style="font-size:clamp(2rem,5vw,4.5rem)">{{ category.name }}</h3><p class="subtitle">{{ category.description }}</p></div><div class="collection-preview">{% for item in entry.preview[:2] %}<div>{% if item.images %}<img class="product-image" src="{{ item.images[0].path }}" alt="{{ item.name }}" loading="lazy">{% endif %}</div>{% endfor %}</div></a>{% endfor %}</div></section>
+		{% elif block.type == 'quote' %}
+		<section class="shell page"><div style="border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:12vw 6vw;text-align:center"><div class="kicker">{{ block.eyebrow }}</div><p class="title">{{ block.text }}</p></div></section>
+		{% elif block.type == 'text' %}
+		<section class="shell page narrow"><div class="desc">{{ block.html|safe }}</div></section>
+		{% endif %}
+	{% endfor %}
+{% endblock %}

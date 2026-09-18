@@ -1,0 +1,37 @@
+import mimetypes
+import os
+from uuid import uuid4
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.models import MediaAsset
+
+UPLOADS = os.path.join(
+	os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))),
+	"data",
+	"media",
+	"uploads",
+)
+os.makedirs(UPLOADS, exist_ok=True)
+
+
+async def save(db: AsyncSession, filename: str, content: bytes, alt_text=""):
+	safe = os.path.basename(filename).replace("\x00", "") or "upload.bin"
+	stored = f"{uuid4().hex[:12]}-{safe}"
+	with open(os.path.join(UPLOADS, stored), "wb") as handle:
+		handle.write(content)
+	row = MediaAsset(
+		filename=safe,
+		path=f"/media/uploads/{stored}",
+		mime_type=mimetypes.guess_type(stored)[0] or "application/octet-stream",
+		size_bytes=len(content),
+		alt_text=alt_text,
+	)
+	db.add(row)
+	await db.flush()
+	return row
+
+
+async def all_media(db: AsyncSession):
+	return list((await db.execute(select(MediaAsset).order_by(MediaAsset.id.desc()))).scalars().all())

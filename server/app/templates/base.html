@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>{{ title }}{% if title != site.site.name %} — {{ site.site.name }}{% endif %}</title>
+	<meta name="description" content="{{ site.site.description }}">
+	<link rel="icon" href="{{ site.site.favicon_path }}">
+	<link rel="stylesheet" href="/static/css/site.css">
+	{% block head %}{% endblock %}
+	<style>
+		:root{--bg:{{ site.theme.background }};--surface:{{ site.theme.surface }};--text:{{ site.theme.text }};--muted:{{ site.theme.muted }};--border:{{ site.theme.border }};--accent:{{ site.theme.accent }};--accent-text:{{ site.theme.accent_text }};--radius:{{ site.theme.radius }}px;--max-width:{{ site.theme.max_width }}px}
+	</style>
+</head>
+<body>
+	{% if site.announcement.enabled and site.announcement.text %}<div class="announcement">{% if site.announcement.href %}<a href="{{ site.announcement.href }}">{% endif %}{{ site.announcement.text }}{% if site.announcement.href %}</a>{% endif %}</div>{% endif %}
+	<header class="site-nav">
+		<div class="nav-inner">
+			<div class="nav-side left">
+				<nav class="nav-links">
+					{% for item in site.navigation[:4] %}<a class="nav-link" href="{{ item.href }}">{{ item.label }}</a>{% endfor %}
+				</nav>
+			</div>
+			<div class="nav-center"><a class="logo" href="/">{{ site.site.name }}</a></div>
+			<div class="nav-side right">
+				<a class="nav-icon mobile-only" href="/shop" aria-label="Shop">☰</a>
+				<a class="nav-icon" href="/search" aria-label="Search">⌕</a>
+				<a class="nav-icon" href="/wishlist" aria-label="Wishlist">♡</a>
+				<a class="nav-icon" href="/cart" aria-label="Cart">◰ {% if cart_count %}<span class="badge">{{ cart_count }}</span>{% endif %}</a>
+				{% if user %}<a class="nav-icon" href="/account" aria-label="Account">◎</a>{% else %}<a class="nav-icon" href="/login" aria-label="Account">◎</a>{% endif %}
+			</div>
+		</div>
+	</header>
+	<main>{% block content %}{% endblock %}</main>
+	<footer class="site-footer">
+		<div class="footer-inner">
+			<a class="footer-brand" href="/">{{ site.site.name }}</a>
+			<p class="footer-copy">{{ site.site.tagline }}</p>
+			<div class="footer-links">{% for item in site.footer %}<a href="{{ item.href }}">{{ item.label }}</a>{% endfor %}</div>
+			<div class="footer-copy">© {{ site.site.name }} {{ now_year if now_year else '2026' }}</div>
+		</div>
+	</footer>
+	<script src="/static/js/site.js" defer></script>
+</body>
+</html>

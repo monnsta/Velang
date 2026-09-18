@@ -1,0 +1,13 @@
+<article class="card product-card">
+	<a class="card-link" href="/product/{{ product.slug }}">
+		<div class="product-image">
+			{% if product.images %}<img src="{{ product.images[0].path }}" alt="{{ product.images[0].alt_text or product.name }}" loading="lazy">{% else %}<div style="height:100%;display:grid;place-items:center;color:#999">{{ product.product_type|upper }}</div>{% endif %}
+			{% if product.badge %}<span style="position:absolute;left:10px;top:10px" class="badge-label">{{ product.badge }}</span>{% endif %}
+		</div>
+		<div class="product-info">
+			<div class="product-name">{{ product.name }}</div>
+			<div class="product-subtitle">{{ product.subtitle or product.product_type|capitalize }}</div>
+			<div class="product-row"><span class="product-price">{{ product.currency }} {{ '%.2f'|format(product.price) }}</span>{% if product.stock_count == 0 and product.track_inventory %}<span class="badge-label">Sold out</span>{% elif product.featured %}<span class="badge-label">Selected</span>{% endif %}</div>
+		</div>
+	</a>
+</article>

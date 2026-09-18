@@ -1,0 +1,13 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+server/database/*.db
+server/data/media/uploads/*
+!server/data/media/uploads/.gitkeep
+AdminApp/.gradle/
+AdminApp/build/
+AdminApp/app/build/
+.idea/
+.DS_Store
