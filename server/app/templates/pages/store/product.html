@@ -1,0 +1,95 @@
+{% extends "layouts/base.html" %}
+{% block page_styles %}
+    <link rel="stylesheet" href="/static/css/gallery.css?v=20261015-1">
+    <link rel="stylesheet" href="/static/css/product.css?v=20261015-1">
+{% endblock %}
+{% block content %}
+    <section>
+        <div class="product-layout">
+            <div class="product-gallery"
+                 data-product-gallery
+                 data-image-paths="{{ product.images | map(attribute='path') | list | tojson | forceescape }}"
+                 data-image-alts="{{ product.images | map(attribute='alt_text') | list | tojson | forceescape }}"
+                 data-fallback-alt="{{ product.name }}">
+                {% if product.images %}
+                    <img src="{{ product.images[0].path }}"
+                         alt="{{ product.images[0].alt_text or product.name }}"
+                         loading="eager"
+                         data-gallery-image>
+                {% else %}
+                    <div class="empty">No image</div>
+                {% endif %}
+                {% if product.images|length > 1 %}
+                    <div class="image-progress gallery-progress"
+                         data-gallery-progress
+                         aria-hidden="true">
+                        <span data-gallery-progress-thumb></span>
+                    </div>
+                {% endif %}
+            </div>
+            <aside class="product-panel">
+                <h1>{{ product.name }}</h1>
+                <div class="product-price-large"
+                     data-money
+                     data-value="{{ product.price }}"
+                     data-currency="{{ product.currency }}">{{ product.price }}</div>
+                {% if product.variants %}
+                    <div class="field">
+                        <label for="product-variant">Variant</label>
+                        <select class="select" id="product-variant" data-variant-select>
+                            {% for variant in product.variants %}
+                                <option value="{{ variant.id }}"
+                                        data-price="{{ variant.price if variant.price is not none else product.price }}"
+                                        data-currency="{{ product.currency }}"
+                                        {% if variant.stock_count <= 0 %} disabled{% endif %}>{{ variant.name }}{% if variant.price is not none %} — {{ variant.price }}{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+                {% set size_mode = (product.meta or {}).get('size_mode', 'none') %}
+                {% set predefined_sizes = (product.meta or {}).get('predefined_sizes', []) %}
+                {% if size_mode != "none" %}
+                    <div class="field" style="margin-top:20px" data-size-container data-size-mode="{{ size_mode }}">
+                        <label>Size</label>
+                        {% if size_mode in ["predefined", "both"] and predefined_sizes %}
+                            <div class="size-options">
+                                {% for size in predefined_sizes %}<button type="button"
+        class="size-option"
+        data-size-option="{{ size }}"
+        aria-pressed="false">{{ size }}</button>{% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if size_mode in ["custom", "both"] %}
+                            <details class="accordion"{% if size_mode == 'custom' %} open{% endif %}>
+                                <summary><span class="accordion-title">Custom measurements</span></summary>
+                                <div class="accordion-body">
+                                    <div class="form-grid two">
+                                        {% for field in (product.meta or {}).get('custom_size_fields', ['width', 'length']) %}
+                                            <label for="custom-{{ field }}">
+                                                {{ field|replace('_', ' ')|title }}<input class="input"
+       id="custom-{{ field }}"
+       data-custom-size="{{ field }}"
+       inputmode="decimal">
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </details>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                <div class="hero-actions">
+                    <button class="button"
+                            type="button"
+                            data-add-cart="{{ product.id }}"
+                            data-original="Add to cart">Add to cart</button>
+                    <button class="button secondary"
+                            type="button"
+                            data-buy-now="{{ product.id }}"
+                            data-original="Buy now">Buy now</button>
+                </div>
+                {% if rendered_description %}<div class="desc">{{ rendered_description|safe }}</div>{% endif %}
+            </aside>
+        </div>
+    </section>
+{% endblock %}

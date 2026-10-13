@@ -1,0 +1,78 @@
+{% extends "layouts/base.html" %}
+{% block page_styles %}
+    <link rel="stylesheet" href="/static/css/account.css?v=20261015-1">
+{% endblock %}
+{% block content %}
+    <section class="shell page">
+        <div class="section-head">
+            <h1 class="title" style="font-size:clamp(2.5rem,6vw,6rem)">Cart</h1>
+        </div>
+        {% if items %}
+            <div class="cart-grid">
+                <div class="cart-items">
+                    {% for item in items %}
+                        {% set product = products[item.id] %}
+                        <div class="cart-item">
+                            {% if product.images %}
+                                <img class="cart-thumb"
+                                     src="{{ product.images[0].path }}"
+                                     alt="{{ product.name }}">
+                            {% endif %}
+                            <div>
+                                <a href="/product/{{ product.slug }}">
+                                    <strong>{{ product.name }}</strong>
+                                </a>
+                                <div class="subtitle"><span data-money
+      data-value="{{ product.price }}"
+      data-currency="{{ product.currency }}">{{ product.price }}</span></div>
+                                {% if item.options.size %}<div class="subtitle">Size: {{ item.options.size }}</div>{% endif %}
+                                {% if item.options.custom_size %}<div class="subtitle">Custom: {% for key, value in item.options.custom_size.items() %}{{ key }} {{ value }}{% if not loop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+                                <form data-qty-form="{{ item.id }}"
+                                      style="display:flex;
+                                             gap:6px;
+                                             margin-top:8px">
+                                    <input class="input"
+                                           style="width:80px;
+                                                  padding:8px"
+                                           type="number"
+                                           min="0"
+                                           value="{{ item.quantity }}">
+                                    <button class="button secondary small" type="submit">Update</button>
+                                </form>
+                            </div>
+                            <div class="cart-actions">
+                                <button class="button secondary small" data-remove-cart="{{ item.id }}">Remove</button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <aside class="cart-summary">
+                    <div class="kicker">Subtotal</div>
+                    <div style="font-size:2rem;font-family:VelangBold;margin:6px 0 20px">
+                        {% if mixed_currency %}Multiple currencies{% else %}<span data-money
+      data-value="{{ total }}"
+      data-currency="{{ cart_currency }}">{{ total }}</span>{% endif %}
+                    </div>
+                    {% if mixed_currency %}
+                        <p class="notice">Your cart contains more than one currency. Keep each order to a single currency.</p>
+                    {% else %}
+                        <p class="subtitle">Taxes and delivery can be handled by your checkout configuration.</p>
+                        <a class="button"
+                           href="/checkout"
+                           style="display:block;
+                                  text-align:center">Continue</a>
+                    {% endif %}
+                </aside>
+            </div>
+        {% else %}
+            <div class="empty">
+                <h2>Your cart is empty.</h2>
+                <p class="subtitle">There is nothing here yet.</p>
+                <a class="button"
+                   style="display:inline-block;
+                          margin-top:14px"
+                   href="/shop">Browse pieces</a>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

@@ -1,4 +1,0 @@
-{% extends 'base.html' %}
-{% block content %}
-<section class="shell page"><div style="padding:4vw 0"><div class="kicker">Account</div><h1 class="title" style="font-size:clamp(2.5rem,6vw,6rem)">{{ user.name or user.email.split('@')[0] }}</h1><p class="subtitle">{{ user.email }}</p></div><div class="account-grid"><nav class="account-nav"><a href="/account">Overview</a><a href="/orders">Orders</a><a href="/wishlist">Wishlist</a><a href="/addresses">Addresses</a><a href="/logout">Log out</a></nav><div class="account-main"><div class="kicker">Recent orders</div>{% for order in orders %}<div class="data-row"><div><strong>{{ order.number }}</strong><div class="subtitle">{{ order.status }} · {{ order.payment_status }}</div></div><strong>INR {{ '%.2f'|format(order.total) }}</strong></div>{% else %}<div class="empty" style="margin-top:16px"><p class="subtitle">No orders yet.</p></div>{% endfor %}</div></div></section>
-{% endblock %}

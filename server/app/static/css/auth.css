@@ -1,0 +1,12 @@
+.split-page { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-height: min(68vh, 760px); }
+.split-side { display: flex; align-items: center; justify-content: center; min-width: 0; padding: clamp(24px, 5vw, 80px); }
+.split-side + .split-side { border-left: 1px solid var(--border); background: var(--surface); }
+.panel { width: min(100%, 480px); }
+.panel > .title { margin-block: 8px 16px; }
+.panel .notice { margin-top: 12px; }
+.panel .subtitle { max-width: 34ch; }
+@media (max-width: 760px) {
+	.split-page { grid-template-columns: 1fr; min-height: 0; }
+	.split-side { padding: 36px 24px; }
+	.split-side + .split-side { border-left: 0; border-top: 1px solid var(--border); }
+}

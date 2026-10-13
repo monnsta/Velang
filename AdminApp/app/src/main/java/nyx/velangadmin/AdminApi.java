@@ -28,9 +28,13 @@ public final class AdminApi {
 		baseUrl = value == null ? "" : value.trim().replaceAll("/+$", "");
 	}
 
-	public void setToken(String token) { this.token = token == null ? "" : token; }
+	public void setToken(String token) {
+		this.token = token == null ? "" : token;
+	}
 
-	public String getBaseUrl() { return baseUrl; }
+	public String getBaseUrl() {
+		return baseUrl;
+	}
 
 	public JSONObject get(String path) throws Exception {
 		return request("GET", path, null);
@@ -50,13 +54,18 @@ public final class AdminApi {
 
 	private JSONObject request(String method, String path, String json) throws Exception {
 		Request.Builder builder = new Request.Builder().url(baseUrl + path);
-		if (!token.isEmpty()) builder.header("Authorization", "Bearer " + token);
+		if (!token.isEmpty())
+			builder.header("Authorization", "Bearer " + token);
 		if (json != null) {
 			RequestBody body = RequestBody.create(json, MediaType.parse("application/json; charset=utf-8"));
-			if (method.equals("POST")) builder.post(body);
-			else if (method.equals("PUT")) builder.put(body);
-			else builder.method(method, body);
-		} else builder.method(method, null);
+			if (method.equals("POST"))
+				builder.post(body);
+			else if (method.equals("PUT"))
+				builder.put(body);
+			else
+				builder.method(method, body);
+		} else
+			builder.method(method, null);
 		try (Response response = client.newCall(builder.build()).execute()) {
 			ResponseBody body = response.body();
 			String text = body == null ? "{}" : body.string();
@@ -72,19 +81,23 @@ public final class AdminApi {
 		}
 	}
 
-	public JSONObject upload(String path, byte[] data, String filename, String mimeType, String altText) throws Exception {
-		RequestBody fileBody = RequestBody.create(data, MediaType.parse(mimeType == null ? "application/octet-stream" : mimeType));
+	public JSONObject upload(
+			String path, byte[] data, String filename, String mimeType, String altText) throws Exception {
+		RequestBody fileBody = RequestBody.create(
+				data, MediaType.parse(mimeType == null ? "application/octet-stream" : mimeType));
 		MultipartBody body = new MultipartBody.Builder()
 				.setType(MultipartBody.FORM)
 				.addFormDataPart("file", filename, fileBody)
 				.addFormDataPart("alt_text", altText == null ? "" : altText)
 				.build();
 		Request.Builder builder = new Request.Builder().url(baseUrl + path).post(body);
-		if (!token.isEmpty()) builder.header("Authorization", "Bearer " + token);
+		if (!token.isEmpty())
+			builder.header("Authorization", "Bearer " + token);
 		try (Response response = client.newCall(builder.build()).execute()) {
 			ResponseBody responseBody = response.body();
 			String text = responseBody == null ? "{}" : responseBody.string();
-			if (!response.isSuccessful()) throw new IOException("HTTP " + response.code() + ": " + text);
+			if (!response.isSuccessful())
+				throw new IOException("HTTP " + response.code() + ": " + text);
 			return new JSONObject(text);
 		}
 	}

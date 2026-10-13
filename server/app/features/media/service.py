@@ -1,14 +1,16 @@
+import asyncio
 import mimetypes
 import os
 from uuid import uuid4
 
+from app.db.models import MediaAsset
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import MediaAsset
-
 UPLOADS = os.path.join(
-	os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))),
+	os.path.dirname(
+		os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+	),
 	"data",
 	"media",
 	"uploads",
@@ -16,11 +18,19 @@ UPLOADS = os.path.join(
 os.makedirs(UPLOADS, exist_ok=True)
 
 
+def _write_file(path: str, content: bytes):
+	"""Provide the internal  write file operation."""
+	with open(path, "wb") as handle:
+		handle.write(content)
+
+
 async def save(db: AsyncSession, filename: str, content: bytes, alt_text=""):
 	safe = os.path.basename(filename).replace("\x00", "") or "upload.bin"
-	stored = f"{uuid4().hex[:12]}-{safe}"
-	with open(os.path.join(UPLOADS, stored), "wb") as handle:
-		handle.write(content)
+	stored = f"img-{uuid4().hex[:8]}-{safe}"
+	file_path = os.path.join(UPLOADS, stored)
+
+	await asyncio.to_thread(_write_file, file_path, content)
+
 	row = MediaAsset(
 		filename=safe,
 		path=f"/media/uploads/{stored}",
@@ -34,4 +44,8 @@ async def save(db: AsyncSession, filename: str, content: bytes, alt_text=""):
 
 
 async def all_media(db: AsyncSession):
-	return list((await db.execute(select(MediaAsset).order_by(MediaAsset.id.desc()))).scalars().all())
+	return list(
+		(await db.execute(select(MediaAsset).order_by(MediaAsset.id.desc())))
+		.scalars()
+		.all()
+	)

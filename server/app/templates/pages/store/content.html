@@ -1,0 +1,12 @@
+{% extends "layouts/base.html" %}
+{% block page_styles %}
+    <link rel="stylesheet" href="/static/css/content.css?v=20261015-1">
+{% endblock %}
+{% block content %}
+    <section class="page-section">
+        <div class="content-width page-heading">
+            <h1 class="title">{{ content.title }}</h1>
+        </div>
+        <article class="content-width desc">{{ content_html|safe }}</article>
+    </section>
+{% endblock %}

@@ -1,0 +1,36 @@
+<article class="product-card">
+    <div class="product-media"
+         data-image-carousel
+         data-image-paths="{{ product.images | map(attribute='path') | list | tojson | forceescape }}"
+         data-image-alts="{{ product.images | map(attribute='alt_text') | list | tojson | forceescape }}"
+         data-fallback-alt="{{ product.name }}">
+        <a class="card-link"
+           href="/product/{{ product.slug }}"
+           aria-label="View {{ product.name }}">
+            {% if product.images %}
+                <img class="product-card-image"
+                     src="{{ product.images[0].path }}"
+                     alt="{{ product.images[0].alt_text or product.name }}"
+                     loading="{{ 'eager' if loop is defined and loop.first else 'lazy' }}"
+                     data-card-image>
+            {% else %}<div class="empty">No image</div>{% endif %}
+        </a>
+        {% if product.images|length > 1 %}
+            <div class="image-progress" data-image-progress aria-hidden="true">
+                <span data-image-progress-thumb></span>
+            </div>
+        {% endif %}
+    </div>
+    <div class="product-info">
+        <a class="product-name"
+           href="/product/{{ product.slug }}"
+           title="{{ product.name }}">{{ product.name }}</a>
+        <div class="product-row">
+            <span class="product-price"
+                  data-money
+                  data-value="{{ product.price }}"
+                  data-currency="{{ product.currency }}">{{ product.price }}</span>
+            {% if product.stock_count == 0 and product.track_inventory %}<span class="badge-label">Sold out</span>{% endif %}
+        </div>
+    </div>
+</article>

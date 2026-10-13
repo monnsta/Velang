@@ -1,10 +1,12 @@
-from fastapi import Depends, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.features.auth.service import admin_user, by_id
+from fastapi import Depends, HTTPException, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
+GET_DB = Depends(get_db)
 
 
-async def current_user(request: Request, db: AsyncSession = Depends(get_db)):
+async def current_user(request: Request, db: AsyncSession = GET_DB):
 	user_id = request.session.get("user_id")
 	if not user_id:
 		return None
@@ -15,14 +17,14 @@ async def current_user(request: Request, db: AsyncSession = Depends(get_db)):
 	return user
 
 
-async def require_user(request: Request, db: AsyncSession = Depends(get_db)):
+async def require_user(request: Request, db: AsyncSession = GET_DB):
 	user = await current_user(request, db)
 	if not user:
 		raise HTTPException(401, "Login required")
 	return user
 
 
-async def require_admin(request: Request, db: AsyncSession = Depends(get_db)):
+async def require_admin(request: Request, db: AsyncSession = GET_DB):
 	header = request.headers.get("authorization", "")
 	if not header.startswith("Bearer "):
 		raise HTTPException(401, "Admin session required")

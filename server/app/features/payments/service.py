@@ -1,12 +1,14 @@
 from decimal import Decimal
 from urllib.parse import quote
 from uuid import uuid4
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
 from app.db.models import Order, PaymentTransaction
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class PaymentProvider:
+
 	name = "base"
 
 	async def create(self, order: Order):
@@ -14,6 +16,7 @@ class PaymentProvider:
 
 
 class DevPaymentProvider(PaymentProvider):
+
 	name = "dev"
 
 	async def create(self, order: Order):
@@ -25,6 +28,7 @@ class DevPaymentProvider(PaymentProvider):
 
 
 class GooglePayIndiaProvider(PaymentProvider):
+
 	name = "google_pay_india"
 
 	async def create(self, order: Order):
@@ -61,14 +65,16 @@ def provider() -> PaymentProvider:
 async def create(db: AsyncSession, order: Order):
 	active_provider = provider()
 	data = await active_provider.create(order)
-	db.add(PaymentTransaction(
-		order_id=order.id,
-		provider=active_provider.name,
-		provider_reference=data["reference"],
-		status=data["status"],
-		amount=Decimal(order.total),
-		currency=order.currency,
-		request_payload=data,
-	))
+	db.add(
+		PaymentTransaction(
+			order_id=order.id,
+			provider=active_provider.name,
+			provider_reference=data["reference"],
+			status=data["status"],
+			amount=Decimal(order.total),
+			currency=order.currency,
+			request_payload=data,
+		)
+	)
 	await db.flush()
 	return data

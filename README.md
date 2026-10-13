@@ -1,246 +1,182 @@
-# Velang Rebuild
+# Velang
 
-A clean rebuild of the Velang storefront and admin system.
+## Stack
 
-The old projects are kept as **design and feature references**, not as architectural dependencies. The rebuild uses one FastAPI application that owns the storefront, server-rendered HTML, JSON APIs and SQLite database, plus a **native Android admin app**.
+- Python 3.11+
+- FastAPI / Uvicorn
+- SQLAlchemy 2 async + SQLite
+- Jinja2 SSR
+- Markdown + sandboxed Jinja description templates
+- Native Android admin client
+- Google Sign-In for production accounts
+- Google Pay / UPI integration boundary for checkout
 
-## What changed
-
-- FastAPI + async SQLAlchemy + SQLite.
-- Server-side rendered storefront with Jinja templates; there is no separate frontend application.
-- Feature-oriented backend packages instead of a generic extension / wrapper / repository stack.
-- Integration boundaries only where changing the implementation actually matters (payment/media).
-- Reusable Markdown + sandboxed Jinja description templates for product types.
-- Product variants, inventory, categories, SEO fields, metadata, images, coupons, wishlists, addresses, orders, users and audit logs.
-- Editable site theme, navigation, footer, homepage sections, SEO defaults, social links and checkout settings from the admin app.
-- Native Android admin app. It is **not a WebView**.
-- Google Sign-In through Google Identity / Android Credential Manager for admin access.
-- Delhivery and PhonePe are intentionally not included.
-
-## 1. Run the server locally
-
-From the repository root:
+## Run locally
 
 ```text
-python3 -m venv .venv
+python -m venv .venv
 source .venv/bin/activate
-pip install -r server/requirements.txt
+python -m pip install -r server/requirements.txt
 cp .env.example .env
-```
-
-Change at least:
-
-```text
-SESSION_SECRET=...a long random value...
-ADMIN_EMAILS=your-google-account@example.com
-```
-
-Then seed demo data:
-
-```text
-PYTHONPATH=server python server/scripts/seed.py
-```
-
-Start the server:
-
-```text
+python server/scripts/seed.py
 ./server/run.sh
 ```
 
-Open `http://127.0.0.1:8000/`.
+Open `http://127.0.0.1:8000`.
 
-Run the included lightweight tests with:
+Development authentication is disabled by default. To test the customer sign-in flow locally without Google credentials, explicitly set `DEV_AUTH=true` in `.env`; do not expose that server publicly. The Android admin app uses a separate device-pairing key, not the development login.
 
-```text
-pytest -q server/tests
-```
+## Production authentication
 
-FastAPI API docs are available at `/api/docs` while `APP_ENV=development`.
+For a public deployment, set `APP_ENV=production`, a strong random `SESSION_SECRET`, `COOKIE_SECURE=true`, and `DEV_AUTH=false`. Configure `GOOGLE_WEB_CLIENT_ID` for customer sign-in. For the Android admin app, configure a separate long random `ADMIN_PAIRING_KEY`, pair trusted devices, then rotate the pairing key. Google web-admin access remains restricted by `ADMIN_EMAILS` and the user's admin flag.
 
-## 2. Google setup
+## Payments
 
-The project has two Google sign-in surfaces: the storefront and the native admin app.
+The checkout layer is provider-oriented without making the rest of the application provider-dependent. Development uses the local/manual payment implementation.
 
-Create or use one Google Cloud project and open **Google Auth Platform**. Configure the app's branding / consent information and create a **Web application client ID**. Put that client ID in:
+For India production checkout, configure the Google Pay / UPI integration described in `docs/ARCHITECTURE.md` and your payment provider's server-side verification requirements. Do not treat a client-created UPI URI as proof of payment.
 
-```text
-GOOGLE_WEB_CLIENT_ID=...
-```
+## Native admin app
 
-The server verifies the Google ID token against that client ID. The Android admin app asks the server for the same public client ID at `/api/admin/config`, then uses Android Credential Manager to obtain the Google ID token.
+The Android project is under `AdminApp/`.
 
-Google's current Android guidance uses Credential Manager for Sign in with Google and says the ID token returned by the app should be validated by the server. The current stable Credential Manager release is 1.6.0, and the current Google ID SDK release is 1.2.1.
+For a local server on the Android emulator, use the emulator's host address. For a physical phone, use the machine's reachable LAN address or HTTPS deployment.
 
-## 3. Locking down the admin
+On first launch, enter the server URL and pairing key once. The app verifies the server, stores its URL and a revocable device token, and does not ask for the URL again unless you change it or the connection stops working. No Google account is required in the Android admin app.
 
-The admin is intentionally **not a webpage** and the storefront has no admin link.
+The app controls:
 
-Access requires all of the following:
+- products, variants, inventory and categories, with drag-and-drop reordering
+- optional description templates with validated dynamic fields
+- media upload and asset selection
+- searchable order cards and a grouped production queue with special-care flags
+- safe deletion of orders and unused accounts (historic accounts are deactivated instead)
+- users
+- content pages
+- storefront theme and reusable light-palette controls
+- navigation, footer, SEO, social and checkout settings
+- audit history
 
-1. A valid Google ID token.
-2. The Google email must be present in `ADMIN_EMAILS`.
-3. The server issues an opaque, database-backed admin session token.
-4. Every native admin request sends that token as `Authorization: Bearer ...`.
+## Product descriptions
 
-For a real deployment, put the FastAPI server behind HTTPS and set:
+A product does not require a description template.
 
-```text
-COOKIE_SECURE=true
-APP_ENV=production
-```
-
-For stronger isolation, keep the admin API behind a VPN, private reverse proxy or another network access control layer. The allowlist is the identity gate; it is not a substitute for network security.
-
-## 4. Native admin app
-
-Open `AdminApp/` in Android Studio, or build from Termux. The project uses AGP 9.4.0, which requires Gradle 9.6.0 or newer; use a compatible Gradle/JDK 17+ setup:
-
-```text
-gradle -p AdminApp :app:assembleDebug
-```
-
-The package name is:
-
-```text
-nyx.velangadmin
-```
-
-On first launch, enter the server URL, save it, then use **Sign in with Google**.
-
-The app currently exposes:
-
-- dashboard counts
-- product editor
-- category editor
-- Markdown/Jinja description template editor
-- order status + payment status controls
-- coupon editor
-- content page editor
-- site/theme/navigation/homepage/SEO/social/checkout settings
-- user activation/admin controls
-- media upload and listing
-- audit log endpoint for future UI expansion
-
-## 5. Product description templates
-
-Descriptions are not hardcoded into each product anymore.
-
-A template can look like:
+Normal products can use Markdown directly. A description template is an optional reusable Markdown/Jinja document selected for products that share a structure. Variables come from the product object, including custom metadata:
 
 ```text
 # {{ product.name }}
 
-{{ product.subtitle }}
-
 {{ product.description }}
 
-**Material:** {{ product.material }}
-
-**SKU:** {{ product.sku }}
+Material: {{ product.meta.material }}
 ```
 
-A product stores dynamic values and points to the template. Different product types can use different templates, and a product can explicitly choose which template to use.
+This means the template owns the repeated structure while each product only supplies its changing values.
 
-Templates are rendered through Jinja's sandbox and then passed through Markdown + HTML sanitization. Raw HTML is disabled in product Markdown.
+Templates can also define structured fields through a field builder in the admin app: each field has a stable key, label, optional placeholder, single-line or multiline input, a required flag, and a Markdown toggle. The template reads these values through `product.fields`, for example `{{ product.fields.story }}`. Ordinary fields are escaped so punctuation cannot accidentally become headings, links, or emphasis; enable Markdown only for fields where formatted content is intentional. See [`docs/DESCRIPTION_TEMPLATES.md`](docs/DESCRIPTION_TEMPLATES.md) for the schema format.
 
-## 6. Homepage / theme controls
+Products may be flagged for special care and carry private production notes for the maker. When an order is placed, its SKU (including the chosen variant SKU), template values, variant metadata, and production instructions are snapshotted onto the order item. Later product edits therefore do not rewrite the instructions attached to existing orders. The admin Orders screen puts paid, unfinished work into a grouped production queue, prioritizes special-care items, and shows customer options, quantities, related order numbers, and maker notes. Product templates and products referenced by historic orders cannot be deleted without first resolving those references; deleting an order or an unused account remains possible with an explicit confirmation.
 
-The storefront is intentionally data-driven without turning the entire backend into a plugin framework.
+## Sizes
 
-Homepage blocks support types such as:
+Products can use one of three modes:
 
-- `hero`
-- `editorial`
-- `featured_products`
-- `latest_products`
-- `category_strip`
-- `quote`
-- `text`
+- `predefined` — only configured sizes
+- `custom` — exact customer measurements
+- `both` — either option
 
-The admin app can edit the complete JSON for these structures. That is the advanced escape hatch; everyday product and category fields still have dedicated controls.
+The mode and fields are stored with the product's metadata so products that do not need sizing are not forced to have it.
 
-Theme settings cover the small visual system rather than forcing dozens of design tokens:
+## Storefront design
 
-- background
-- surface
-- text
-- muted text
-- border
-- accent
-- accent text
-- corner radius
-- max content width
+The storefront uses a restrained visual system: mostly monochrome, thin borders, large typography, image-led product cards, and no decorative shadows. The homepage directly lists the active catalogue; there is no featured/collections landing-page layer.
 
-The visual defaults intentionally stay close to the old Velang language: monochrome, flat, editorial, sparse and mostly boxy.
+The storefront uses a single light palette and ignores operating-system appearance.
 
-## 7. Payments
+### Front-end asset layout
 
-`PAYMENT_PROVIDER=dev` is the local/test mode.
+The base layout loads only the shared reset/type rules, header/navigation, common controls, and the self-hosted Font Awesome glyph subset. Templates load a page stylesheet through the `page_styles` block: catalog cards, product detail, account/cart, content, and sign-in layouts remain separate instead of accumulating overrides in one global file. When changing a component, update the rule in its owning stylesheet rather than appending another specificity workaround.
 
-The Google-oriented provider stores the merchant VPA, amount and transaction reference needed to build a UPI payment request, but **production payment settlement / verification is not falsely presented as complete**. Before launch, the merchant account, PSP flow and server-side transaction verification need to be configured for the chosen Google Pay / UPI integration.
+Product cards and product detail galleries each keep exactly one image element in the rendered layout. Their image paths and alt text are held as JSON data attributes; `gallery.js` swaps the active image and moves the thin progress rail after a horizontal swipe, while `site.js` handles shared cart and navigation behavior. Product-card information reserves two title lines, so every price begins at the same vertical position regardless of title length. The sticky header height is defined once in `header.css`, with responsive sizing and transparent/solid product-page states managed there.
 
-## 8. Storage
+## Formatting
 
-Local media is stored in:
+Run:
 
 ```text
-server/data/media/
+./format.sh
 ```
 
-Uploads go to:
+It formats Python, Jinja templates, web assets and Android Java when the corresponding tools are installed.
+
+Python indentation is normalized to literal tabs after Ruff formatting to match the project's source style.
+
+Install development tooling with:
 
 ```text
-server/data/media/uploads/
+python -m pip install -r server/requirements-dev.txt
 ```
 
-The database stores the public media path. A future Google Cloud Storage backend can be added behind the existing media boundary without changing product/page code.
+## Tests
 
-## 9. Database
+Run the complete server suite with:
 
-The first run creates `server/database/velang.db` with SQLAlchemy metadata.
+```text
+PYTHONPATH=server pytest -q
+```
 
-For a production deployment, introduce Alembic migrations before changing schema on an existing live database. The current project deliberately starts with `create_all()` so a fresh clone remains immediately runnable.
+The suite covers Markdown/Jinja rendering and sanitization, site defaults and theme merging, authentication sessions, catalog operations, product search, custom sizing validation, and public configuration contracts. Integration tests use an isolated in-memory SQLite database.
 
-## 10. Project layout
+## Project layout
 
 ```text
 server/app/
-├── core/                  # configuration, security, site settings, Markdown rendering
-├── db/                    # SQLAlchemy models and session setup
-├── features/
-│   ├── auth/
-│   ├── catalog/
-│   ├── cart/
-│   ├── wishlist/
-│   ├── addresses/
-│   ├── orders/
-│   ├── coupons/
-│   ├── content/
-│   ├── media/
-│   ├── payments/
-│   └── admin/
-├── templates/             # SSR UI
-├── static/                # CSS, JS, fonts and artwork
-└── web.py                 # storefront routes
+├── core/           shared application concerns
+├── db/             SQLAlchemy models and database lifecycle
+├── features/       feature-owned behavior and APIs
+├── templates/
+│   ├── layouts/    global layouts
+│   ├── components/ reusable visual pieces
+│   └── pages/      route-oriented pages
+├── static/
+│   ├── css/        shared chrome and page-specific stylesheets
+│   └── js/         focused site, cart, account, product, and gallery modules
+└── web.py          SSR route composition
 
-AdminApp/
-└── app/src/main/java/nyx/velangadmin/
+AdminApp/            native Android administration client
+  └── .../nyx/velangadmin/
+      ├── MainActivity.java          navigation and screen composition
+      ├── AdminJson.java             reusable data parsing/display helpers
+      ├── ProductFormEditors.java    product image and variant editing
+      └── TemplateFieldsEditor.java  structured template-field builder
+docs/                architecture and content authoring notes
+scripts/             development tooling
 ```
 
-The intended rule is simple: **features own business behavior; integrations own external providers; core owns cross-cutting concerns.** There is no requirement to create an interface for every class.
 
-## 11. Secrets from the old projects
+## HTTPS and a custom domain
 
-Do not copy credentials, API tokens, cookies or other secrets from the old archives into this repository. Put them in `.env` or the platform's secret manager instead.
+For a public deployment, point your domain's DNS records at the server or reverse proxy, then terminate TLS at Caddy, nginx, or your hosting platform. Keep Uvicorn bound to a private interface behind that proxy; do not expose the application process directly to the internet. Configure the proxy to forward the original host and HTTPS scheme so redirects and absolute URLs use the public domain. Caddy can obtain and renew certificates automatically once DNS points to the host and ports 80/443 are reachable.
 
-If any credential in an old archive was real, rotate it.
+The Android admin app accepts a full `https://` server URL. On first launch, pair the device with `ADMIN_PAIRING_KEY`; the URL is only a connection setting, not an authentication secret. Use the app's **Server** control to verify and save a changed address. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for a working Caddy example and setup checklist.
 
-## 12. Local Android note
 
-The native admin app defaults to `http://127.0.0.1:8000`, which is convenient when the server is running on the same Android device through Termux. The APK permits cleartext HTTP for this local/dev workflow. For a deployed admin server, use an HTTPS URL and keep the server behind normal network controls.
+### Security defaults
 
-## 13. Admin controls
+Development sign-in is disabled by default. Keep `DEV_AUTH=false` outside isolated local development. For public deployments, use HTTPS, set `COOKIE_SECURE=true`, configure a strong `SESSION_SECRET`, and use the admin app pairing flow with a private `ADMIN_PAIRING_KEY`. The admin app stores a long-lived, revocable device token after pairing; it does not need a Google account.
 
-The native admin app intentionally exposes both structured editors and advanced JSON editors. The structured controls cover the common path (product/catalog fields, theme colors, inventory, orders, coupons, users, uploads, etc.); JSON is there for homepage blocks, navigation, metadata, SEO, and future settings without forcing a schema migration for every cosmetic/content change.
+### Nested categories
 
-The audit screen shows the latest changes made through the admin API.
+Categories support arbitrary depth through `parent_id`. The API rejects parent cycles. Existing SQLite databases are upgraded on startup to add the nullable parent column.
+
+### Removed features
+
+Wishlist and coupon endpoints are not mounted, their active implementation modules have been removed, and checkout no longer accepts coupon codes. Existing order totals are preserved when the retired coupon tables and coupon-only order columns are removed during SQLite startup migration. New orders use catalogue prices.
+
+## Deployment with automatic HTTPS
+
+A Docker Compose + Caddy deployment is included for a simple custom-domain setup. Copy `.env.example` to `.env`, set your domain and strong session/pairing secrets, point the domain DNS at your server, allow ports 80/443, then run `docker compose up -d --build`. Caddy automatically provisions and renews TLS certificates. Full steps and caveats are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+## Building the Android admin app
+
+`AdminApp/` is a standalone Android Gradle project. Open that directory in Android Studio with Android SDK 35 installed, let Gradle sync, then run the `app` configuration. The app uses Java 11 language settings and supports Android 8.0 (API 26) and newer. Its optional dark theme is app-local and does not change storefront theme settings.

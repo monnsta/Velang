@@ -1,0 +1,41 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      HOST: 0.0.0.0
+      PORT: 8000
+      DATABASE_URL: sqlite+aiosqlite:////app/database/velang.db
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      COOKIE_SECURE: "true"
+      DEV_AUTH: "false"
+      ADMIN_PAIRING_KEY: ${ADMIN_PAIRING_KEY:-}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      GOOGLE_WEB_CLIENT_ID: ${GOOGLE_WEB_CLIENT_ID:-}
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-dev}
+    volumes:
+      - ./database:/app/database
+      - ./server/data/media:/app/server/data/media
+      - ./.env:/app/.env:ro
+    expose:
+      - "8000"
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+
+volumes:
+  caddy_data:
+  caddy_config:

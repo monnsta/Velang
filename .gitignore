@@ -3,9 +3,8 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
-server/database/*.db
-server/data/media/uploads/*
-!server/data/media/uploads/.gitkeep
+database/*.db
+server/data/*
 AdminApp/.gradle/
 AdminApp/build/
 AdminApp/app/build/

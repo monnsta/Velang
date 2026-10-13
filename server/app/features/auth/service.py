@@ -1,36 +1,28 @@
-from datetime import datetime, timedelta
-from passlib.context import CryptContext
+from datetime import timedelta, timezone
+
+from app.core.config import settings
+from app.core.security import (
+	new_token,
+	normalize_email,
+	token_hash,
+	utcnow,
+	verify_google_token,
+)
+from app.db.models import AdminSession, User
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.config import settings
-from app.core.security import hash_token, new_token, normalize_email, utcnow, verify_google_token
-from app.db.models import AdminSession, User
-
-pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 async def by_id(db: AsyncSession, user_id: int):
-	return (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+	return (
+		await db.execute(select(User).where(User.id == user_id))
+	).scalar_one_or_none()
 
 
 async def by_email(db: AsyncSession, email: str):
-	return (await db.execute(select(User).where(User.email == normalize_email(email)))).scalar_one_or_none()
-
-
-async def create_user(db: AsyncSession, email: str, password: str, name: str):
-	if await by_email(db, email):
-		return None
-	user = User(email=normalize_email(email), name=name.strip(), password_hash=pwd.hash(password))
-	db.add(user)
-	await db.flush()
-	return user
-
-
-async def password_login(db: AsyncSession, email: str, password: str):
-	user = await by_email(db, email)
-	if not user or not user.password_hash or not user.is_active or not pwd.verify(password, user.password_hash):
-		return None
-	return user
+	return (
+		await db.execute(select(User).where(User.email == normalize_email(email)))
+	).scalar_one_or_none()
 
 
 async def google_user(db: AsyncSession, credential: str):
@@ -47,24 +39,65 @@ async def google_user(db: AsyncSession, credential: str):
 	return user
 
 
+async def development_user(db: AsyncSession, admin: bool = False):
+	"""Return a deterministic local-only user for development and tests."""
+	email = "dev-admin@localhost" if admin else "dev-user@localhost"
+	user = await by_email(db, email)
+	if not user:
+		user = User(
+			email=email,
+			name="Development Admin" if admin else "Development User",
+			is_admin=admin,
+		)
+		db.add(user)
+		await db.flush()
+	else:
+		user.is_active = True
+		if admin:
+			user.is_admin = True
+	return user
+
+
 async def issue_admin_session(db: AsyncSession, user: User):
 	token = new_token()
-	session = AdminSession(user_id=user.id, token_hash=hash_token(token), expires_at=utcnow() + timedelta(days=settings.admin_session_days))
+	session = AdminSession(
+		user_id=user.id,
+		token_hash=token_hash(token),
+		expires_at=utcnow() + timedelta(days=settings.admin_session_days),
+	)
 	db.add(session)
 	await db.flush()
 	return token, session
 
 
 async def admin_user(db: AsyncSession, raw_token: str):
-	session = (await db.execute(select(AdminSession).where(AdminSession.token_hash == hash_token(raw_token), AdminSession.revoked_at.is_(None)))).scalar_one_or_none()
-	if not session or session.expires_at < utcnow():
+	session = (
+		await db.execute(
+			select(AdminSession).where(
+				AdminSession.token_hash == token_hash(raw_token),
+				AdminSession.revoked_at.is_(None),
+			)
+		)
+	).scalar_one_or_none()
+	if not session:
+		return None
+	# SQLite returns timezone-naive values for SQLAlchemy DateTime columns even
+	# when an aware UTC value was originally inserted. Normalize before comparing.
+	expires_at = session.expires_at
+	if expires_at.tzinfo is None:
+		expires_at = expires_at.replace(tzinfo=timezone.utc)
+	if expires_at < utcnow():
 		return None
 	user = await by_id(db, session.user_id)
 	return user if user and user.is_admin and user.is_active else None
 
 
 async def revoke(db: AsyncSession, raw_token: str):
-	session = (await db.execute(select(AdminSession).where(AdminSession.token_hash == hash_token(raw_token)))).scalar_one_or_none()
+	session = (
+		await db.execute(
+			select(AdminSession).where(AdminSession.token_hash == token_hash(raw_token))
+		)
+	).scalar_one_or_none()
 	if session:
 		session.revoked_at = utcnow()
 	await db.flush()

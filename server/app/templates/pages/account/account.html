@@ -1,0 +1,45 @@
+{% extends "layouts/base.html" %}
+{% block page_styles %}
+    <link rel="stylesheet" href="/static/css/account.css?v=20261015-1">
+{% endblock %}
+{% block content %}
+    <section class="shell page">
+        <div class="account-heading">
+            <div class="kicker">Account</div>
+            <h1 class="title">{{ user.name or user.email.split("@")[0] }}</h1>
+            <p class="subtitle">{{ user.email }}</p>
+        </div>
+        <div class="account-grid">
+            <nav class="account-nav" aria-label="Account navigation">
+                <a href="/orders">Orders</a>
+                <a href="/addresses">Addresses</a>
+                <a href="/logout">Log out</a>
+            </nav>
+            <div class="account-main">
+                <div class="section-head compact">
+                    <div>
+                        <div class="kicker">Recent</div>
+                        <h2>Orders</h2>
+                    </div>
+                    <a class="button secondary small" href="/orders">View all</a>
+                </div>
+                {% for order in orders %}
+                    <div class="data-row">
+                        <div>
+                            <a href="/orders/{{ order.number }}"><strong>{{ order.number }}</strong></a>
+                            <div class="subtitle">{{ order.status }} · {{ order.payment_status }}</div>
+                        </div>
+                        <strong><span data-money
+      data-value="{{ order.total }}"
+      data-currency="{{ order.currency }}">{{ order.total }}</span></strong>
+                    </div>
+                {% else %}
+                    <div class="empty">
+                        <p class="subtitle">No orders yet.</p>
+                        <a class="button secondary small" href="/shop">Shop</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endblock %}

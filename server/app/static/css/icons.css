@@ -1,0 +1,23 @@
+/* Font Awesome 4.7 core glyphs, self-hosted to keep storefront icons reliable offline. */
+@font-face {
+	font-family: "Font Awesome 6 Free";
+	src: url("/static/fonts/fontawesome.woff2") format("woff2");
+	font-weight: 900;
+	font-style: normal;
+	font-display: block;
+}
+
+.fa {
+	font-family: "Font Awesome 6 Free";
+	font-weight: 900;
+	display: inline-block;
+	font-style: normal;
+	-webkit-font-smoothing: antialiased;
+}
+
+.fa-search::before { content: "\f002"; }
+.fa-shopping-bag::before { content: "\f290"; }
+.fa-user::before { content: "\f007"; }
+.fa-ellipsis-v::before { content: "\f142"; }
+.fa-times::before { content: "\f00d"; }
+.fa-chevron-down::before { content: "\f078"; }

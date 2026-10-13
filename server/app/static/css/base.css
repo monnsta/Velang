@@ -1,0 +1,231 @@
+@font-face {
+	font-family: VelangNormal;
+	src: url("/static/fonts/normal.woff2") format("woff2");
+	font-weight: 400;
+	font-display: swap;
+}
+@font-face {
+	font-family: VelangNormal;
+	src: url("/static/fonts/normal-thin.woff2") format("woff2");
+	font-weight: 200;
+	font-display: swap;
+}
+@font-face {
+	font-family: VelangBold;
+	src: url("/static/fonts/bold.woff2") format("woff2");
+	font-weight: 700;
+	font-display: swap;
+}
+@font-face {
+	font-family: VelangLogo;
+	src: url("/static/fonts/logo.woff2") format("woff2");
+	font-display: swap;
+}
+
+:root {
+	--bg: var(--theme-light-bg, #fff);
+	--surface: var(--theme-light-surface, #fff);
+	--text: var(--theme-light-text, #111);
+	--muted: var(--theme-light-muted, #686868);
+	--border: var(--theme-light-border, #d8d8d3);
+	--accent: var(--theme-light-accent, #111);
+	--accent-text: var(--theme-light-accent-text, #fff);
+	--content-width: var(--max-width, 1320px);
+	--page-gutter: 32px;
+	--ui-radius: clamp(0px, var(--theme-radius, 0px), 24px);
+	color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body {
+	margin: 0;
+	min-width: 0;
+	max-width: 100%;
+	overflow-x: clip;
+	background: var(--bg);
+	color: var(--text);
+	font-weight: 200;
+	font-family: VelangNormal, Arial, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+	display: none;
+}
+body, input, textarea, select, button { font-family: inherit; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+	outline: 2px solid var(--text);
+	outline-offset: 3px;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	min-height: 100dvh;
+}
+
+main {
+	min-width: 0;
+	flex: 1
+}
+.kicker {
+	color: var(--muted);
+	font-size: 0.68rem;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	padding-bottom: 5px;
+}
+.title {
+	margin: 0;
+	font-size: clamp(2.1rem, 5vw, 5rem);
+	font-weight: 200;
+	line-height: 0.96;
+	letter-spacing: -0.045em;
+}
+.subtitle {
+	color: var(--muted);
+	font-size: 0.92rem;
+	line-height: 1.55;
+}
+.content-width {
+	width: min(var(--content-width), calc(100% - var(--page-gutter)));
+	margin-inline: auto;
+}
+.page-section { padding-block: 52px 0; }
+.page-heading { padding-block: 28px 38px; }
+.shell {
+	width: min(var(--content-width), calc(100% - var(--page-gutter)));
+	margin-inline: auto;
+}
+.page { padding-block: 28px 0; }
+.section-head {
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: 18px;
+	margin-bottom: 24px;
+}
+.empty {
+	width: min(var(--content-width), calc(100% - var(--page-gutter)));
+	margin: 30px auto 0;
+	padding: 72px 20px;
+	border-top: 1px solid var(--border);
+	text-align: center;
+}
+.empty h2 { margin: 0 0 8px; font-weight: 200; }
+.notice, .form-error {
+	padding: 12px 14px;
+	border: 1px solid var(--border);
+	font-size: 0.82rem;
+	line-height: 1.5;
+}
+.form-error { border-color: #a33; color: #8e2525; }
+.desc { line-height: 1.7; font-weight: 200; overflow-wrap: anywhere; }
+.desc h1, .desc h2, .desc h3, .desc h4 { font-weight: 400; line-height: 1.1; }
+.desc img { display: block; width: 100%; height: auto; margin-block: 18px; }
+.desc table { width: 100%; border-collapse: collapse; }
+.desc th, .desc td { padding: 8px; border: 1px solid var(--border); text-align: left; }
+
+.site-footer {
+	margin-top: 0;
+	padding: 46px 16px 24px;
+	background: var(--accent);
+	color: var(--accent-text);
+}
+.footer-inner {
+	width: min(var(--content-width), 100%);
+	margin-inline: auto;
+}
+.footer-brand {
+	display: block;
+	width: 100%;
+	max-width: none;
+	overflow-wrap: anywhere;
+	font-family: VelangLogo, VelangBold, sans-serif;
+	font-size: clamp(2rem, 15vw, 12rem);
+	line-height: 0.95;
+	text-align: center;
+	white-space: nowrap;
+	padding-top: 28px;
+}
+
+.footer-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1.25rem;
+	padding-bottom: 1rem;
+	align-items: center;
+}
+.footer-links a {
+	font-size: 0.70rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: inherit;
+	text-decoration: none;
+	transition: opacity 0.2s ease;
+}
+.footer-links a:hover,
+.footer-links a:focus-visible {
+	opacity: 0.7;
+	outline: offset 2px;
+}
+
+.footer-bottom { margin-top: 22px; color: color-mix(in srgb, var(--accent-text) 55%, transparent); font-size: 0.67rem; }
+.toast {
+	position: fixed;
+	left: 50%;
+	bottom: 20px;
+	z-index: 120;
+	max-width: min(420px, calc(100vw - 28px));
+	padding: 11px 15px;
+	background: var(--accent);
+	color: var(--accent-text);
+	font-size: 0.76rem;
+	line-height: 1.4;
+	transform: translate(-50%, 10px);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 160ms ease, transform 160ms ease;
+}
+.toast.is-visible { transform: translate(-50%, 0); opacity: 1; }
+body.menu-open, body.search-open { overflow: hidden; }
+:where(button, a, input, select, textarea) { transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, opacity 180ms ease; }
+
+@media (max-width: 640px) {
+	:root { --page-gutter: 24px; }
+	.page-section { padding-top: 34px; }
+	.page-heading { padding-block: 22px 26px; }
+	.section-head { align-items: start; }
+	.footer-brand {
+		max-width: 80vw;
+		font-size: 1.35rem;
+		font-size: clamp(2rem, 18vw, 6rem)
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after {
+		scroll-behavior: auto !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+/* A single, bounded radius token lets the admin theme control storefront corners. */
+:where(.button, .input, .select, .textarea, .form-grid input, .card, .panel, .notice, .product-card, .cart-thumb, .product-gallery, .size-option, .accordion) {
+	border-radius: var(--ui-radius);
+}
+:where(.hero-actions, .product-row, .product-info, .cart-item, .cart-summary, .search-form, .checkbox-row) { min-width: 0; }
+:where(.section-head, .hero-actions, .cart-item, .product-row, .checkbox-row) > * { min-width: 0; }
+@media (max-width: 640px) {
+	.footer-links { row-gap: 14px; }
+	.footer-links a { min-height: 32px; display: inline-flex; align-items: center; }
+}

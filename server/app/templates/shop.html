@@ -1,8 +1,0 @@
-{% extends 'base.html' %}
-{% block content %}
-<section class="shell page">
-	<div class="section-head"><div><div class="kicker">{{ 'Search results' if query else 'Store' }}</div><h1 class="title" style="font-size:clamp(2.2rem,5vw,5rem)">{{ query if query else 'Shop' }}</h1><p class="subtitle">{{ products|length }} pieces shown</p></div><form><input class="input" name="q" placeholder="Search" value="{{ query }}"></form></div>
-	<div style="display:flex;gap:8px;justify-content:flex-end;padding:0 0 16px;flex-wrap:wrap"><a class="button secondary small" href="/shop?sort=newest{% if query %}&q={{ query|urlencode }}{% endif %}">Newest</a><a class="button secondary small" href="/shop?sort=price-low{% if query %}&q={{ query|urlencode }}{% endif %}">Price ↑</a><a class="button secondary small" href="/shop?sort=price-high{% if query %}&q={{ query|urlencode }}{% endif %}">Price ↓</a></div>
-	{% if products %}<div class="product-grid">{% for product in products %}{% include 'components/product-card.html' %}{% endfor %}</div>{% else %}<div class="empty"><h2>No products found.</h2><p class="subtitle">Try another search or browse the collections.</p></div>{% endif %}
-</section>
-{% endblock %}

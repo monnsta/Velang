@@ -1,0 +1,93 @@
+/* Shared controls are loaded on all pages; page-specific layouts live elsewhere. */
+.button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 9px;
+	min-height: 46px;
+	padding: 12px 17px;
+	border: 1px solid var(--text);
+	border-radius: var(--ui-radius, 0px);
+	background: var(--text);
+	color: var(--accent-text);
+	font-size: 0.68rem;
+	letter-spacing: 0.08em;
+	text-align: center;
+	text-transform: uppercase;
+	transition: opacity 160ms ease, background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.button:hover { opacity: 0.76; }
+.button.secondary, .button.ghost { background: transparent; color: var(--text); }
+.button.danger { border-color: #9e3030; background: #9e3030; color: #fff; }
+.button.small { min-height: 36px; padding: 8px 11px; font-size: 0.62rem; }
+.button.compact { min-height: 38px; padding: 9px 12px; }
+.button:disabled { opacity: 0.42; cursor: not-allowed; }
+.button.icon-only { width: 44px; padding: 9px; }
+
+.form, .form-grid { display: grid; gap: 14px; }
+.field { display: grid; gap: 7px; }
+.field label, .form-grid label {
+	display: grid;
+	gap: 7px;
+	font-size: 0.67rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+.input, .select, .textarea, .form-grid input {
+	width: 100%;
+	min-width: 0;
+	border: 1px solid var(--border);
+	border-radius: var(--ui-radius, 0px);
+	background: var(--surface);
+	color: var(--text);
+	padding: 12px;
+	outline: 0;
+}
+.input:focus, .select:focus, .textarea:focus, .form-grid input:focus { border-color: var(--text); }
+.textarea { min-height: 150px; resize: vertical; }
+.form-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.form-grid .wide { grid-column: 1 / -1; }
+.checkbox-row { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 0.82rem; }
+.checkbox-row input { width: auto; flex: 0 0 auto; accent-color: var(--text); }
+.form-grid label.checkbox-row { display: flex; flex-direction: row; align-items: center; gap: 9px; letter-spacing: normal; text-transform: none; }
+.form-grid label.checkbox-row input { width: auto; min-width: 16px; margin: 0; }
+.form-error { border: 1px solid #a33; color: #8e2525; font-size: 0.8rem; padding: 11px 12px; }
+
+.accordion { margin: 0; border-block: 1px solid var(--border); }
+.accordion + .accordion { border-top: 0; }
+.accordion summary {
+	display: grid;
+	grid-template-columns: 13px minmax(0, 1fr);
+	align-items: center;
+	justify-content: initial;
+	gap: 12px;
+	padding: 15px 0;
+	cursor: pointer;
+	list-style: none;
+	font-size: 0.7rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+.accordion summary::-webkit-details-marker { display: none; }
+.accordion summary::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-right: 1px solid currentColor;
+	border-bottom: 1px solid currentColor;
+	transform: rotate(-45deg);
+	transition: transform 180ms ease;
+	justify-self: start;
+}
+.accordion[open] > summary::before { transform: rotate(45deg); }
+.accordion-body { padding: 0 0 16px 25px; color: var(--muted); line-height: 1.6; }
+.accordion summary { -webkit-tap-highlight-color: transparent; user-select: none; }
+.accordion summary:focus { outline: none; }
+.accordion summary:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.field > .accordion { margin-top: 14px; }
+.desc .accordion { margin-block: 0; }
+.desc .accordion-body > :first-child { margin-top: 0; }
+.desc .accordion-body > :last-child { margin-bottom: 0; }
+
+@media (max-width: 640px) { .form-grid.two { grid-template-columns: 1fr; } }

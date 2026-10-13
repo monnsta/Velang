@@ -2,10 +2,10 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from starlette.middleware.sessions import SessionMiddleware
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.core.config import ROOT, settings
 from app.core.site import get_site
@@ -17,14 +17,14 @@ from app.features.auth.web import router as auth_web
 from app.features.cart.api import router as cart_api
 from app.features.content.api import router as content_api
 from app.features.orders.api import router as orders_api
-from app.features.wishlist.api import router as wishlist_api
-from app.web import router as web
+from app.web import page_ctx, router as web
 
 TEMPLATES = Jinja2Templates(directory=os.path.join(ROOT, "server", "app", "templates"))
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+	"""Initialize application resources for the process lifetime."""
 	await init_db()
 	yield
 
@@ -42,12 +42,34 @@ app.add_middleware(
 	https_only=settings.cookie_secure,
 	same_site="lax",
 )
-app.mount("/static", StaticFiles(directory=os.path.join(ROOT, "server", "app", "static")), name="static")
-app.mount("/media", StaticFiles(directory=os.path.join(ROOT, "server", "data", "media")), name="media")
-for route in (auth_api, cart_api, wishlist_api, addresses_api, orders_api, content_api, admin_api):
+app.mount(
+	"/static",
+	StaticFiles(directory=os.path.join(ROOT, "server", "app", "static")),
+	name="static",
+)
+app.mount(
+	"/media",
+	StaticFiles(directory=os.path.join(ROOT, "server", "data", "media")),
+	name="media",
+)
+for route in (
+	auth_api,
+	cart_api,
+	addresses_api,
+	orders_api,
+	content_api,
+	admin_api,
+):
 	app.include_router(route)
 app.include_router(auth_web)
 app.include_router(web)
+
+
+@app.get("/favicon.ico")
+async def favicon():
+	return FileResponse(
+		os.path.join(ROOT, "server", "app", "static", "assets", "favicon.png")
+	)
 
 
 @app.get("/health")
@@ -62,7 +84,7 @@ async def fallback_404(request: Request, exc):
 	async with SessionLocal() as db:
 		return TEMPLATES.TemplateResponse(
 			request,
-			"404.html",
-			{"request": request, "site": await get_site(db), "title": "Not found"},
+			"pages/store/404.html",
+			await page_ctx(request, db, "Not found"),
 			status_code=404,
 		)

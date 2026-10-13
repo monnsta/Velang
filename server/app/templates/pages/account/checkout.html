@@ -1,0 +1,64 @@
+{% extends "layouts/base.html" %}
+{% block page_styles %}
+    <link rel="stylesheet" href="/static/css/account.css?v=20261015-1">
+{% endblock %}
+{% block content %}
+    <section class="shell page">
+        <div class="section-head">
+            <div>
+                <div class="kicker">Finish</div>
+                <h1 class="title" style="font-size:clamp(2.5rem,6vw,6rem)">Checkout</h1>
+            </div>
+        </div>
+        <div class="cart-grid">
+            <div class="cart-items" style="padding:24px">
+                <form class="form" data-checkout-form>
+                    <div class="field">
+                        <label>Delivery address</label>
+                        {% if addresses %}
+                            <select class="select" name="address_id">
+                                {% for address in addresses %}
+                                    <option value="{{ address.id }}">{{ address.label }} — {{ address.full_name }}, {{ address.city }}{% if address.is_default %} (default){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            <div class="notice">Add an address before checkout. <a href="/addresses"><u>Manage addresses</u></a></div>
+                        {% endif %}
+                    </div>
+                    <div class="field">
+                        <label>Order notes</label>
+                        <textarea class="textarea" name="notes" placeholder="Optional notes"></textarea>
+                    </div>
+                    <div class="notice">Payment provider: <strong>{{ 'Google Pay / UPI' if site.payment_provider == 'google_pay_india' else 'Development manual payment' }}</strong>. The production provider setup is documented in README.</div>
+                    {% if mixed_currency %}<div class="notice">This cart contains multiple currencies. Return to the cart and place separate orders for each currency.</div>{% endif %}
+                    <button class="button"
+                            type="submit"
+                            {% if not addresses or mixed_currency %}disabled{% endif %}>Place order</button>
+                </form>
+            </div>
+            <aside class="cart-summary">
+                <div class="kicker">Current total</div>
+                {% if mixed_currency %}
+                    <div style="font-size:1rem">Multiple currencies</div>
+                {% else %}
+                    <div style="font-size:2rem;
+                                font-weight:400;
+                                font-family:VelangBold"
+                         data-money
+                         data-value="{{ total }}"
+                         data-currency="{{ cart_currency }}">{{ total }}</div>
+                {% endif %}
+                <hr class="rule">
+                {% for item in items %}
+                    {% set product = products[item.id] %}
+                    <div class="data-row">
+                        <span>{{ product.name }} × {{ item.quantity }}</span>
+                        <strong data-money
+                                data-value="{{ product.price * item.quantity }}"
+                                data-currency="{{ product.currency }}">{{ product.price * item.quantity }}</strong>
+                    </div>
+                {% endfor %}
+            </aside>
+        </div>
+    </section>
+{% endblock %}

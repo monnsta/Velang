@@ -1,0 +1,72 @@
+.account-heading {
+	width: min(var(--content-width), calc(100% - var(--page-gutter)));
+	margin-inline: auto;
+	padding-block: 36px 30px;
+}
+.account-heading .subtitle { margin-bottom: 0; }
+.account-grid {
+	width: min(var(--content-width), calc(100% - var(--page-gutter)));
+	margin-inline: auto;
+	display: block;
+	border-top: 1px solid var(--border);
+}
+.account-nav {
+	display: flex;
+	border-right: 0;
+	border-bottom: 1px solid var(--border);
+}
+
+.account-nav a {
+	flex: 1;
+	text-align: center;
+	display: inline-block;
+	padding: 14px 0;
+	border-bottom: none;
+	font-size: 0.7rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	background: transparent !important;
+	text-decoration: none;
+}
+.account-nav a:hover, .account-nav a.is-active {
+	background: transparent !important;
+	text-decoration: none;
+}
+.account-main {
+	min-width: 0;
+	padding: 28px 0;
+}
+.data-row { display: grid; grid-template-columns: 1fr auto; gap: 18px; padding: 15px 0; border-bottom: 1px solid var(--border); }
+.address-layout { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 28px; }
+.address-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.address-card { padding: 16px; border: 1px solid var(--border); background: var(--surface); }
+.cart-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.6fr); }
+.cart-items { min-width: 0; }
+.cart-item {
+	display: grid;
+	grid-template-columns: 100px minmax(0, 1fr) auto;
+	gap: 16px;
+	padding: 16px;
+	border-bottom: 1px solid var(--border);
+	align-items: center;
+}
+.cart-thumb { display: block; width: 100px; height: auto; }
+.cart-summary { position: sticky; top: 132px; align-self: start; padding: 24px; border-left: 1px solid var(--border); }
+.cart-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.account-main h2, .account-main h3 { font-weight: 400; }
+.account-main .empty { width: 100%; margin: 0; }
+@media (max-width: 900px) {
+	.cart-grid, .address-layout { grid-template-columns: 1fr; }
+	.cart-summary { position: static; border-top: 1px solid var(--border); border-left: 0; }
+	.account-grid { display: block; grid-template-columns: none; }
+	.account-nav { display: flex; overflow-x: auto; border-right: 0; }
+	.account-nav a { border-right: 0; }
+}
+@media (max-width: 640px) {
+	.account-heading, .account-grid { width: min(100% - var(--page-gutter), var(--content-width)); }
+	.address-list { grid-template-columns: 1fr; }
+	.cart-item { grid-template-columns: 72px minmax(0, 1fr); gap: 12px; padding: 12px 0; }
+	.cart-thumb { width: 72px; }
+	.cart-item .cart-actions { grid-column: 2; justify-content: flex-start; }
+	.account-main { padding: 22px 0; }
+}

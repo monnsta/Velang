@@ -1,0 +1,15 @@
+{% extends "layouts/base.html" %}
+{% block page_styles %}
+    <link rel="stylesheet" href="/static/css/catalog.css?v=20261015-1">
+    <link rel="stylesheet" href="/static/css/gallery.css?v=20261015-1">
+{% endblock %}
+{% block content %}
+    <section class="catalog-page home-catalog" aria-label="All products">
+        <div class="catalog-grid">
+            {% for product in products %}
+                {% include "components/product/card.html" %}
+            {% endfor %}
+        </div>
+        {% if not products %}<div class="empty-state">No products available yet.</div>{% endif %}
+    </section>
+{% endblock %}

@@ -1,4 +1,0 @@
-{% extends 'base.html' %}
-{% block content %}
-<section class="shell page"><div class="section-head"><div><div class="kicker">Account</div><h1 class="title" style="font-size:clamp(2.4rem,5vw,5rem)">Orders</h1></div><a class="button secondary small" href="/account">Account</a></div>{% for order in orders %}<article class="data-row"><div><a href="/orders/{{ order.number }}"><strong>{{ order.number }}</strong></a><div class="subtitle">{{ order.created_at.strftime('%d %b %Y') }} · {{ order.status }} · {{ order.payment_status }}</div></div><div style="text-align:right"><strong>INR {{ '%.2f'|format(order.total) }}</strong></div></article>{% else %}<div class="empty"><p class="subtitle">Nothing ordered yet.</p></div>{% endfor %}</section>
-{% endblock %}

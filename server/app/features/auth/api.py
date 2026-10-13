@@ -1,49 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, EmailStr
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.config import settings
 from app.db.session import get_db
 from app.features.auth.deps import require_user
-from app.features.auth.service import google_user, create_user, password_login
+from app.features.auth.service import development_user, google_user
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/api/auth")
 
-
-class Credentials(BaseModel):
-	email: EmailStr
-	password: str
-
-
-class RegisterBody(Credentials):
-	name: str = ""
+GET_DB = Depends(get_db)
+REQUIRE_USER = Depends(require_user)
 
 
 class GoogleBody(BaseModel):
+
 	credential: str
 
 
-@router.post("/register")
-async def register(body: RegisterBody, request: Request, db: AsyncSession = Depends(get_db)):
-	if len(body.password) < 8:
-		raise HTTPException(400, "Password must be at least 8 characters")
-	user = await create_user(db, str(body.email), body.password, body.name)
-	if not user:
-		raise HTTPException(409, "Account already exists")
-	request.session["user_id"] = user.id
-	await db.commit()
-	return {"ok": True}
-
-
-@router.post("/login")
-async def login(body: Credentials, request: Request, db: AsyncSession = Depends(get_db)):
-	user = await password_login(db, str(body.email), body.password)
-	if not user:
-		raise HTTPException(401, "Invalid email or password")
-	request.session["user_id"] = user.id
-	return {"ok": True}
-
-
 @router.post("/google")
-async def google(body: GoogleBody, request: Request, db: AsyncSession = Depends(get_db)):
+async def google(body: GoogleBody, request: Request, db: AsyncSession = GET_DB):
 	try:
 		user = await google_user(db, body.credential)
 	except PermissionError as exc:
@@ -53,6 +28,16 @@ async def google(body: GoogleBody, request: Request, db: AsyncSession = Depends(
 	return {"ok": True}
 
 
+@router.post("/dev")
+async def development_login(request: Request, db: AsyncSession = GET_DB):
+	if settings.app_env == "production" or not settings.dev_auth:
+		raise HTTPException(404, "Development authentication is disabled")
+	user = await development_user(db)
+	request.session["user_id"] = user.id
+	await db.commit()
+	return {"ok": True, "id": user.id, "email": user.email}
+
+
 @router.post("/logout")
 async def logout(request: Request):
 	request.session.clear()
@@ -60,5 +45,10 @@ async def logout(request: Request):
 
 
 @router.get("/me")
-async def me(user=Depends(require_user)):
-	return {"id": user.id, "email": user.email, "name": user.name, "is_admin": user.is_admin}
+async def me(user=REQUIRE_USER):
+	return {
+		"id": user.id,
+		"email": user.email,
+		"name": user.name,
+		"is_admin": user.is_admin,
+	}

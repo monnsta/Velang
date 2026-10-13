@@ -1,0 +1,56 @@
+{% extends "layouts/base.html" %}
+{% block page_styles %}
+    <link rel="stylesheet" href="/static/css/account.css?v=20261015-1">
+{% endblock %}
+{% block content %}
+    <section class="shell page narrow">
+        <div class="section-head">
+            <div>
+                <div class="kicker">Order</div>
+                <h1>{{ order.number }}</h1>
+                <p class="subtitle">{{ order.created_at.strftime("%d %b %Y, %H:%M") }} · {{ order.status }} · {{ order.payment_status }}</p>
+            </div>
+            <a class="button secondary" href="/orders">All orders</a>
+        </div>
+        <div class="card" style="padding:20px">
+            <div class="section-head" style="padding-top:0">
+                <div>
+                    <div class="kicker">Items</div>
+                    <h2>Order summary</h2>
+                </div>
+                <strong><span data-money
+      data-value="{{ order.total }}"
+      data-currency="{{ order.currency }}">{{ order.total }}</span></strong>
+            </div>
+            {% for item in items %}
+                <div class="data-row">
+                    <div>
+                        <strong>{{ item.name_snapshot }}</strong>
+                        {% if item.variant_snapshot %}<div class="subtitle">{{ item.variant_snapshot }}</div>{% endif %}
+                        {% if item.options.size %}<div class="subtitle">Size: {{ item.options.size }}</div>{% endif %}
+                        {% if item.options.custom_size %}<div class="subtitle">Custom: {% for key, value in item.options.custom_size.items() %}{{ key }} {{ value }}{% if not loop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+                    </div>
+                    <div style="text-align:right">{{ item.quantity }} × <span data-money
+       data-value="{{ item.unit_price }}"
+       data-currency="{{ order.currency }}">{{ item.unit_price }}</span></div>
+                </div>
+            {% endfor %}
+            <div class="data-row">
+                <span>Subtotal</span>
+                <strong><span data-money
+      data-value="{{ order.subtotal }}"
+      data-currency="{{ order.currency }}">{{ order.subtotal }}</span></strong>
+            </div>
+            <div style="padding-top:16px">
+                <div class="kicker">Shipping address</div>
+                <p>{{ order.address_snapshot.full_name }}<br>{{ order.address_snapshot.line1 }}{% if order.address_snapshot.line2 %}, {{ order.address_snapshot.line2 }}{% endif %}<br>{{ order.address_snapshot.city }}, {{ order.address_snapshot.state }} {{ order.address_snapshot.postal_code }}<br>{{ order.address_snapshot.country }}<br>{{ order.address_snapshot.phone }}</p>
+            </div>
+            {% if order.notes %}
+                <div style="padding-top:16px">
+                    <div class="kicker">Notes</div>
+                    <p>{{ order.notes }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

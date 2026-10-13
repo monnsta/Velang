@@ -1,1 +1,3 @@
-<resources><string name="app_name">Velang Admin</string></resources>
+<resources>
+	<string name="app_name">Velang Admin</string>
+</resources>

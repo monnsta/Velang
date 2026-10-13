@@ -1,182 +1,125 @@
+/**
+ * Shared storefront behavior.
+ *
+ * The storefront is server-rendered, so this file deliberately stays small:
+ * it handles progressive enhancement, asynchronous cart/account actions, and
+ * the two global header surfaces (search and navigation).
+ */
+
 async function api(path, options = {}) {
+	/** Request a JSON API endpoint and normalize common server errors. */
 	const response = await fetch(path, {
-		credentials: 'same-origin',
-		headers: {'Content-Type': 'application/json', ...(options.headers || {})},
+		credentials: "same-origin",
+		headers: { "Content-Type": "application/json", ...(options.headers || {}) },
 		...options,
 	});
-	const body = await response.json().catch(() => ({}));
-	if (!response.ok) throw new Error(body.detail || body.error || 'Request failed');
+
+	const text = await response.text();
+	let body = {};
+	try {
+		body = text ? JSON.parse(text) : {};
+	} catch (_) {
+		body = {};
+	}
+
+	if (!response.ok) {
+		throw new Error(body.detail || body.error || `Request failed (${response.status})`);
+	}
+
 	return body;
 }
 
-function money(value, currency = 'INR') {
-	try { return new Intl.NumberFormat('en-IN', {style: 'currency', currency}).format(Number(value)); }
-	catch (_) { return `${currency} ${value}`; }
+function showToast(message) {
+	/** Display a short, non-blocking error or status message. */
+	let toast = document.querySelector("[data-toast]");
+	if (!toast) {
+		toast = document.createElement("div");
+		toast.dataset.toast = "";
+		toast.className = "toast";
+		document.body.appendChild(toast);
+	}
+	toast.textContent = message || "Something went wrong.";
+	toast.classList.add("is-visible");
+	window.clearTimeout(toast._timeout);
+	toast._timeout = window.setTimeout(() => toast.classList.remove("is-visible"), 2600);
 }
 
-document.querySelectorAll('[data-add-cart]').forEach((button) => {
-	button.addEventListener('click', async () => {
-		button.disabled = true;
-		try {
-			const variant = document.querySelector('[data-variant-select]');
-			const payload = {product_id: Number(button.dataset.addCart), quantity: 1};
-			if (variant && variant.value) payload.variant_id = Number(variant.value);
-			const data = await api('/api/cart/items', {method: 'POST', body: JSON.stringify(payload)});
-			if (!data.ok) throw new Error(data.error || 'Could not add');
-			button.textContent = 'Added';
-			setTimeout(() => { button.textContent = button.dataset.original || 'Add to cart'; }, 1200);
-		} catch (error) {
-			if (error.message === 'Login required') window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
-			else alert(error.message);
-		} finally { button.disabled = false; }
-	});
-});
-
-document.querySelectorAll('[data-wishlist]').forEach((button) => {
-	button.addEventListener('click', async () => {
-		try {
-			const data = await api(`/api/wishlist/${Number(button.dataset.wishlist)}/toggle`, {method: 'POST', body: JSON.stringify({product_id: Number(button.dataset.wishlist)})});
-			button.setAttribute('aria-pressed', String(data.saved));
-			button.textContent = data.saved ? '♥' : '♡';
-		} catch (error) {
-			if (error.message === 'Login required') window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
-			else alert(error.message);
-		}
-	});
-});
-
-document.querySelectorAll('[data-remove-cart]').forEach((button) => {
-	button.addEventListener('click', async () => {
-		await api(`/api/cart/items/${button.dataset.removeCart}`, {method: 'DELETE'});
-		window.location.reload();
-	});
-});
-
-document.querySelectorAll('[data-qty-form]').forEach((form) => {
-	form.addEventListener('submit', async (event) => {
-		event.preventDefault();
-		const item = Number(form.dataset.qtyForm);
-		const quantity = Number(form.querySelector('input').value);
-		await api(`/api/cart/items/${item}`, {method: 'PATCH', body: JSON.stringify({quantity})});
-		window.location.reload();
-	});
-});
-
-const loginForm = document.querySelector('[data-login-form]');
-if (loginForm) {
-	loginForm.addEventListener('submit', async (event) => {
-		event.preventDefault();
-		const form = new FormData(loginForm);
-		const error = loginForm.querySelector('[data-form-error]');
-		try {
-			await api('/api/auth/login', {method: 'POST', body: JSON.stringify({email: form.get('email'), password: form.get('password')})});
-			window.location.href = new URLSearchParams(window.location.search).get('next') || '/account';
-		} catch (err) { error.textContent = err.message; error.hidden = false; }
-	});
+let scrollLockY = 0;
+let pageScrollLocked = false;
+function setBodyLock(locked, mode = "menu") {
+	/** Lock the document without changing the sticky header's scroll coordinate. */
+	if (locked && !pageScrollLocked) {
+		scrollLockY = window.scrollY;
+		document.body.style.position = "fixed";
+		document.body.style.top = `-${scrollLockY}px`;
+		document.body.style.left = "0";
+		document.body.style.right = "0";
+		document.body.style.width = "100%";
+		pageScrollLocked = true;
+	} else if (!locked && pageScrollLocked) {
+		document.body.style.position = "";
+		document.body.style.top = "";
+		document.body.style.left = "";
+		document.body.style.right = "";
+		document.body.style.width = "";
+		pageScrollLocked = false;
+		window.scrollTo(0, scrollLockY);
+	}
+	document.body.classList.toggle("menu-open", locked && mode === "menu");
+	document.body.classList.toggle("search-open", locked && mode === "search");
 }
 
-const registerForm = document.querySelector('[data-register-form]');
-if (registerForm) {
-	registerForm.addEventListener('submit', async (event) => {
-		event.preventDefault();
-		const form = new FormData(registerForm);
-		const error = registerForm.querySelector('[data-form-error]');
-		try {
-			await api('/api/auth/register', {method: 'POST', body: JSON.stringify({name: form.get('name'), email: form.get('email'), password: form.get('password')})});
-			window.location.href = '/account';
-		} catch (err) { error.textContent = err.message; error.hidden = false; }
-	});
-}
+const searchPanel = document.querySelector("[data-search-panel]");
+const searchToggle = document.querySelector("[data-search-toggle]");
+const searchClose = document.querySelector("[data-search-close]");
+const searchInput = searchPanel?.querySelector("input");
 
-window.velangGoogleLogin = async function(response) {
-	try {
-		await api('/api/auth/google', {method: 'POST', body: JSON.stringify({credential: response.credential})});
-		window.location.href = new URLSearchParams(window.location.search).get('next') || '/account';
-	} catch (error) { alert(error.message); }
-};
-
-const checkoutForm = document.querySelector('[data-checkout-form]');
-if (checkoutForm) {
-	checkoutForm.addEventListener('submit', async (event) => {
-		event.preventDefault();
-		const form = new FormData(checkoutForm);
-		const button = checkoutForm.querySelector('button[type=submit]');
-		button.disabled = true;
-		try {
-			const result = await api('/api/orders', {method: 'POST', body: JSON.stringify({address_id: Number(form.get('address_id')), coupon_code: form.get('coupon_code') || '', notes: form.get('notes') || ''})});
-			if (!result.ok) throw new Error(result.error || 'Could not place order');
-			if (result.payment && result.payment.intent_uri) window.location.href = result.payment.intent_uri;
-			else window.location.href = '/orders';
-		} catch (error) { alert(error.message); button.disabled = false; }
-	});
-}
-
-async function saveAddress(event) {
-	event.preventDefault();
-	const id = document.getElementById("address-id").value;
-	const body = {
-		label: document.getElementById("address-label").value.trim(),
-		full_name: document.getElementById("address-name").value.trim(),
-		phone: document.getElementById("address-phone").value.trim(),
-		line1: document.getElementById("address-line1").value.trim(),
-		line2: document.getElementById("address-line2").value.trim(),
-		city: document.getElementById("address-city").value.trim(),
-		state: document.getElementById("address-state").value.trim(),
-		postal_code: document.getElementById("address-postal").value.trim(),
-		country: document.getElementById("address-country").value.trim(),
-		is_default: document.getElementById("address-default").checked,
-	};
-	try {
-		await api(`/api/addresses${id ? `/${id}` : ""}`, {method: id ? "PUT" : "POST", body: JSON.stringify(body)});
-		window.location.reload();
-	} catch (error) {
-		showError("address-error", error.message);
+function setSearchOpen(open) {
+	/** Open or close the full-header search surface with its CSS transition. */
+	if (!searchPanel) return;
+	searchPanel.classList.toggle("is-open", open);
+	searchPanel.setAttribute("aria-hidden", String(!open));
+	searchToggle?.setAttribute("aria-expanded", String(open));
+	if (open) {
+		setMenuOpen(false);
+		setBodyLock(true, "search");
+		window.requestAnimationFrame(() => searchInput?.focus());
+	} else {
+		setBodyLock(false);
 	}
 }
 
-function resetAddressForm() {
-	document.getElementById("address-form").reset();
-	document.getElementById("address-id").value = "";
-	document.getElementById("address-label").value = "Home";
-	document.getElementById("address-country").value = "India";
-	document.getElementById("address-form-title").textContent = "Add address";
-	document.getElementById("address-error").textContent = "";
-}
+searchToggle?.addEventListener("click", () => setSearchOpen(true));
+searchClose?.addEventListener("click", () => setSearchOpen(false));
 
-async function editAddress(id) {
-	try {
-		const addresses = await api("/api/addresses");
-		const address = addresses.find(item => item.id === id);
-		if (!address) return;
-		document.getElementById("address-id").value = address.id;
-		document.getElementById("address-label").value = address.label || "";
-		document.getElementById("address-name").value = address.full_name || "";
-		document.getElementById("address-phone").value = address.phone || "";
-		document.getElementById("address-line1").value = address.line1 || "";
-		document.getElementById("address-line2").value = address.line2 || "";
-		document.getElementById("address-city").value = address.city || "";
-		document.getElementById("address-state").value = address.state || "";
-		document.getElementById("address-postal").value = address.postal_code || "";
-		document.getElementById("address-country").value = address.country || "India";
-		document.getElementById("address-default").checked = Boolean(address.is_default);
-		document.getElementById("address-form-title").textContent = "Edit address";
-		document.getElementById("address-form").scrollIntoView({behavior: "smooth", block: "start"});
-	} catch (error) {
-		showError("address-error", error.message);
+const menu = document.querySelector("[data-side-menu]");
+const menuBackdrop = document.querySelector("[data-menu-backdrop]");
+const menuToggle = document.querySelector("[data-menu-toggle]");
+const menuClose = document.querySelector("[data-menu-close]");
+
+function setMenuOpen(open) {
+	/** Open or close the persistent side navigation used on every storefront page. */
+	if (!menu || !menuBackdrop) return;
+	menu.classList.toggle("is-open", open);
+	menuBackdrop.classList.toggle("is-open", open);
+	menu.setAttribute("aria-hidden", String(!open));
+	menuToggle?.setAttribute("aria-expanded", String(open));
+	if (open) {
+		setSearchOpen(false);
+		setBodyLock(true, "menu");
+	} else {
+		setBodyLock(false);
 	}
 }
 
-async function removeAddress(id) {
-	if (!window.confirm("Delete this address?")) return;
-	try {
-		await api(`/api/addresses/${id}`, {method: "DELETE"});
-		window.location.reload();
-	} catch (error) {
-		showError("address-error", error.message);
-	}
-}
+menuToggle?.addEventListener("click", () => setMenuOpen(true));
+menuClose?.addEventListener("click", () => setMenuOpen(false));
+menuBackdrop?.addEventListener("click", () => setMenuOpen(false));
+menu?.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => setMenuOpen(false)));
 
-function showError(id, message) {
-	const element = document.getElementById(id);
-	if (element) element.textContent = message || "Something went wrong.";
-}
+document.addEventListener("keydown", (event) => {
+	/** Close global overlays from the keyboard without interfering with forms. */
+	if (event.key !== "Escape") return;
+	setSearchOpen(false);
+	setMenuOpen(false);
+});

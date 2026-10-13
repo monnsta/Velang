@@ -1,4 +1,5 @@
-{% extends 'base.html' %}
-{% block content %}
-<section class="split-page"><div class="split-side"><div class="panel"><div class="kicker">Account</div><h1 class="title" style="font-size:clamp(2.8rem,7vw,6rem)">Create account</h1><p class="subtitle">Keep orders, saved pieces and addresses together.</p></div></div><div class="split-side"><div class="panel"><form class="form" data-register-form><div class="field"><label>Name</label><input class="input" name="name" autocomplete="name"></div><div class="field"><label>Email</label><input class="input" type="email" name="email" required autocomplete="email"></div><div class="field"><label>Password</label><input class="input" type="password" name="password" minlength="8" required autocomplete="new-password"></div><div class="notice" data-form-error hidden></div><button class="button" type="submit">Create account</button></form><p class="subtitle" style="margin-top:22px">Already have an account? <a href="/login"><u>Log in</u></a>.</p></div></div></section>
+{% extends "layouts/base.html" %}
+{% block page_styles %}
+    <link rel="stylesheet" href="/static/css/auth.css?v=20261015-1">
 {% endblock %}
+{% block content %}<section class="shell page narrow"><div class="empty"><div class="kicker">Account</div><h1 class="title">Use Google</h1><p class="subtitle">Velang accounts use Google sign-in. Return to login to continue.</p><a class="button" href="/login">Continue</a></div></section>{% endblock %}

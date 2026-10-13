@@ -1,0 +1,90 @@
+.catalog-page { width: 100%; }
+.catalog-grid {
+	width: 100%;
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	align-items: stretch;
+}
+.product-card {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	background: var(--surface);
+}
+.product-media {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+	background: var(--surface);
+	isolation: isolate;
+	touch-action: pan-y;
+}
+.card-link { display: block; width: 100%; line-height: 0; }
+.product-card-image {
+	display: block;
+	width: 100%;
+	height: auto;
+	max-width: 100%;
+	aspect-ratio: auto;
+	object-fit: contain;
+	user-select: none;
+	-webkit-user-drag: none;
+}
+.product-info {
+	flex: 1 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0;
+	padding: 15px 16px 20px;
+}
+.product-name {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	height: 2.72em;
+	min-height: 2.72em;
+	overflow: hidden;
+	font-size: 0.86rem;
+	line-height: 1.36;
+	font-weight: 200;
+	text-wrap: pretty;
+}
+.product-row {
+	min-height: 1.25em;
+	margin-top: 0;
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 10px;
+}
+.product-price {
+	font-weight: 100;
+	font-family: VelangNormal, sans-serif;
+	font-size: 0.86rem;
+	line-height: 1.25;
+	color: var(--muted)
+}
+.badge-label { font-size: 0.6rem; letter-spacing: 0.07em; text-transform: uppercase; }
+.product-subtitle { display: none; }
+.home-catalog { padding-bottom: 0; }
+.home-catalog .catalog-grid { border-top: 1px solid var(--border); }
+.shop-toolbar {
+	width: min(var(--content-width), calc(100% - var(--page-gutter)));
+	margin-inline: auto;
+	padding-block: 30px 24px;
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: 20px;
+}
+@media (max-width: 1050px) { .catalog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px) {
+	.catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.shop-toolbar { align-items: flex-start; flex-direction: column; padding-block: 24px 18px; }
+	.product-info { padding: 12px 11px 16px; }
+	.product-name { font-size: 0.86rem; }
+	.product-price { font-size: 0.86rem; }
+	.product-card-image { height: 200px; object-fit: cover; }
+}
